@@ -7,6 +7,7 @@
     <style>
         :root {
             --primary: #2563eb;
+            --secondary: #64748b;
             --bg: #f8fafc;
             --card: #ffffff;
             --text: #1e293b;
@@ -89,8 +90,25 @@
         }
 
         .result-value { font-weight: bold; color: var(--primary); }
-        
-        .error { color: #dc2626; font-size: 0.75rem; margin-top: 0.25rem; display: none; }
+
+        .reset-container {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            text-align: right;
+        }
+
+        .reset-btn {
+            padding: 0.5rem 1.5rem;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .reset-btn:hover { background: #475569; }
     </style>
 </head>
 <body>
@@ -164,10 +182,13 @@
             Theoretical Maximum Speedup: <span id="a_res" class="result-value">1.0000</span>
         </div>
     </section>
+
+    <div class="reset-container">
+        <button class="reset-btn" onclick="resetFields()">Reset All Fields</button>
+    </div>
 </div>
 
 <script>
-    // Navigation Logic
     function showSection(id) {
         document.querySelectorAll('.calculator-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -175,41 +196,54 @@
         event.currentTarget.classList.add('active');
     }
 
-    // [Source: mcp://python/source_code] - calculate_flops
+    function resetFields() {
+        // Reset FLOPS
+        document.getElementById('flops_sockets').value = 1;
+        document.getElementById('flops_cores').value = 1;
+        document.getElementById('flops_cycles').value = 0;
+        document.getElementById('flops_per_cycle').value = 0;
+
+        // Reset Speedup
+        document.getElementById('s_t1').value = 1;
+        document.getElementById('s_tn').value = 1;
+        document.getElementById('s_n').value = 1;
+
+        // Reset Amdahl
+        document.getElementById('a_p').value = 0.5;
+        document.getElementById('a_s').value = 1;
+
+        // Refresh Calculations
+        calcFlops();
+        calcSpeedup();
+        calcAmdahl();
+    }
+
     function calcFlops() {
         const sockets = parseFloat(document.getElementById('flops_sockets').value) || 0;
         const cores = parseFloat(document.getElementById('flops_cores').value) || 0;
         const cycles = parseFloat(document.getElementById('flops_cycles').value) || 0;
         const fpc = parseFloat(document.getElementById('flops_per_cycle').value) || 0;
-        
         const result = sockets * cores * cycles * fpc;
         document.getElementById('flops_res').innerText = result.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
-    // [Source: mcp://python/source_code] - calculate_speedup
     function calcSpeedup() {
         const t1 = parseFloat(document.getElementById('s_t1').value) || 0.0001;
         const tn = parseFloat(document.getElementById('s_tn').value) || 0.0001;
         const n = parseFloat(document.getElementById('s_n').value) || 1;
-
         const speedup = t1 / tn;
         const efficiency = speedup / n;
-
         document.getElementById('s_res_s').innerText = speedup.toFixed(4);
         document.getElementById('s_res_e').innerText = (efficiency * 100).toFixed(2) + '%';
     }
 
-    // [Source: mcp://python/source_code] - calculate_amdahl
     function calcAmdahl() {
         const p = parseFloat(document.getElementById('a_p').value) || 0;
         const s = parseFloat(document.getElementById('a_s').value) || 0.0001;
-
-        // Formula: 1 / ((1 - p) + (p / s))
-        const latencySpeedup = 1 / ((1 - p) + (p / s));
-        document.getElementById('a_res').innerText = latencySpeedup.toFixed(4);
+        const latency_speedup = 1 / ((1 - p) + (p / s));
+        document.getElementById('a_res').innerText = latency_speedup.toFixed(4);
     }
 
-    // Initial calculation
     window.onload = () => {
         calcFlops();
         calcSpeedup();
