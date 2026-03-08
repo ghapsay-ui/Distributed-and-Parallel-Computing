@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Metrics Calculator</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        p.subtitle { margin: 0.5rem 0 0; font-size: 0.875rem; opacity: 0.7; }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .calculator-section { display: none; }
+        .calculator-section.active { display: block; }
+
+        .input-group { margin-bottom: 1.25rem; }
+        label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; }
+        input {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .result-box {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+        }
+
+        .result-value { font-weight: bold; color: var(--primary); }
+        
+        .error { color: #dc2626; font-size: 0.75rem; margin-top: 0.25rem; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Computer Performance Metrics</h1>
+        <p class="subtitle">Parallel and Distributed Computing Toolkit</p>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab-btn active" onclick="showSection('flops')">1. FLOPS</button>
+        <button class="tab-btn" onclick="showSection('speedup')">2. Speedup/Efficiency</button>
+        <button class="tab-btn" onclick="showSection('amdahl')">3. Amdahl's Law</button>
+    </nav>
+
+    <!-- FLOPS Section -->
+    <section id="flops" class="calculator-section active">
+        <div class="input-group">
+            <label>Number of Sockets</label>
+            <input type="number" id="flops_sockets" value="1" min="1" oninput="calcFlops()">
+        </div>
+        <div class="input-group">
+            <label>Cores per Socket</label>
+            <input type="number" id="flops_cores" value="1" min="1" oninput="calcFlops()">
+        </div>
+        <div class="input-group">
+            <label>Clock Speed (Cycles per Second)</label>
+            <input type="number" id="flops_cycles" value="0" min="0" step="any" oninput="calcFlops()">
+        </div>
+        <div class="input-group">
+            <label>FLOPs per Cycle</label>
+            <input type="number" id="flops_per_cycle" value="0" min="0" step="any" oninput="calcFlops()">
+        </div>
+        <div class="result-box">
+            Resulting Performance: <span id="flops_res" class="result-value">0.00</span> Units
+        </div>
+    </section>
+
+    <!-- Speedup Section -->
+    <section id="speedup" class="calculator-section">
+        <div class="input-group">
+            <label>Time using 1 processor (T1)</label>
+            <input type="number" id="s_t1" value="1" min="0.0001" step="any" oninput="calcSpeedup()">
+        </div>
+        <div class="input-group">
+            <label>Time using multiple processors (Tn)</label>
+            <input type="number" id="s_tn" value="1" min="0.0001" step="any" oninput="calcSpeedup()">
+        </div>
+        <div class="input-group">
+            <label>Number of processors (n)</label>
+            <input type="number" id="s_n" value="1" min="1" step="1" oninput="calcSpeedup()">
+        </div>
+        <div class="result-box">
+            <div>Speedup (S): <span id="s_res_s" class="result-value">1.0000</span></div>
+            <div>Efficiency (E): <span id="s_res_e" class="result-value">100.00%</span></div>
+        </div>
+    </section>
+
+    <!-- Amdahl Section -->
+    <section id="amdahl" class="calculator-section">
+        <div class="input-group">
+            <label>Parallel Portion (p) [0.0 to 1.0]</label>
+            <input type="number" id="a_p" value="0.5" min="0" max="1" step="0.01" oninput="calcAmdahl()">
+        </div>
+        <div class="input-group">
+            <label>Speedup factor of that portion (s)</label>
+            <input type="number" id="a_s" value="1" min="0.0001" step="any" oninput="calcAmdahl()">
+        </div>
+        <div class="result-box">
+            Theoretical Maximum Speedup: <span id="a_res" class="result-value">1.0000</span>
+        </div>
+    </section>
+</div>
+
+<script>
+    // Navigation Logic
+    function showSection(id) {
+        document.querySelectorAll('.calculator-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // [Source: mcp://python/source_code] - calculate_flops
+    function calcFlops() {
+        const sockets = parseFloat(document.getElementById('flops_sockets').value) || 0;
+        const cores = parseFloat(document.getElementById('flops_cores').value) || 0;
+        const cycles = parseFloat(document.getElementById('flops_cycles').value) || 0;
+        const fpc = parseFloat(document.getElementById('flops_per_cycle').value) || 0;
+        
+        const result = sockets * cores * cycles * fpc;
+        document.getElementById('flops_res').innerText = result.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    // [Source: mcp://python/source_code] - calculate_speedup
+    function calcSpeedup() {
+        const t1 = parseFloat(document.getElementById('s_t1').value) || 0.0001;
+        const tn = parseFloat(document.getElementById('s_tn').value) || 0.0001;
+        const n = parseFloat(document.getElementById('s_n').value) || 1;
+
+        const speedup = t1 / tn;
+        const efficiency = speedup / n;
+
+        document.getElementById('s_res_s').innerText = speedup.toFixed(4);
+        document.getElementById('s_res_e').innerText = (efficiency * 100).toFixed(2) + '%';
+    }
+
+    // [Source: mcp://python/source_code] - calculate_amdahl
+    function calcAmdahl() {
+        const p = parseFloat(document.getElementById('a_p').value) || 0;
+        const s = parseFloat(document.getElementById('a_s').value) || 0.0001;
+
+        // Formula: 1 / ((1 - p) + (p / s))
+        const latencySpeedup = 1 / ((1 - p) + (p / s));
+        document.getElementById('a_res').innerText = latencySpeedup.toFixed(4);
+    }
+
+    // Initial calculation
+    window.onload = () => {
+        calcFlops();
+        calcSpeedup();
+        calcAmdahl();
+    };
+</script>
+
+</body>
+</html>
